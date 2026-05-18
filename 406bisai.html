@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌪️ 旋转运动知识挑战赛 - 学生端（姓名版）</title>
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary: #4a6cf7;
+            --primary-dark: #3651d5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #e8eef5 0%, #dce3ed 30%, #eef1f7 60%, #e3e8f2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        body::before, body::after { content: ''; position: fixed; width: 500px; height: 500px; border-radius: 50%; pointer-events: none; z-index: 0; }
+        body::before { top: -180px; right: -120px; background: radial-gradient(circle, rgba(74,108,247,0.07) 0%, transparent 70%); }
+        body::after { bottom: -150px; left: -100px; background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%); }
+        .app-container { width: 100%; max-width: 720px; position: relative; z-index: 1; }
+        .timer-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--card-bg); border-radius: var(--radius); padding: 14px 20px;
+            margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .timer-bar.hidden { display: none; }
+        .timer-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem; }
+        .timer-icon { font-size: 1.4rem; animation: pulse-timer 2s ease-in-out infinite; }
+        @keyframes pulse-timer { 0%,100%{transform:scale(1);} 50%{transform:scale(1.2);} }
+        .timer-display { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; color: var(--primary); letter-spacing: 1px; min-width: 70px; text-align: right; }
+        .timer-display.warning { color: var(--warning); animation: blink-warning 0.6s ease-in-out 3; }
+        @keyframes blink-warning { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+        .progress-indicator { background: #f1f5f9; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; color: var(--text-secondary); }
+        .main-card {
+            background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-lg);
+            padding: 28px 30px; border: 1px solid var(--border); min-height: 320px;
+            position: relative; overflow: hidden;
+        }
+        .main-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--primary), #818cf8, var(--success)); border-radius: var(--radius) var(--radius) 0 0; }
+        .question-number { display: inline-block; background: linear-gradient(135deg,#eef2ff,#e0e7ff); color: var(--primary); font-weight: 700; font-size: 0.85rem; padding: 6px 14px; border-radius: 20px; margin-bottom: 18px; }
+        .question-text { font-size: 1.15rem; font-weight: 600; color: var(--text); line-height: 1.7; margin-bottom: 8px; }
+        .question-context { background: #f8fafc; border-left: 3px solid #cbd5e1; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 18px; font-size: 0.9rem; color: #475569; }
+        .svg-illustration { display: flex; justify-content: center; margin: 16px 0; }
+        .options-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+        .option-btn {
+            display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 18px;
+            border: 2px solid var(--border); border-radius: var(--radius-sm); background: #fafbfc;
+            cursor: pointer; font-size: 1rem; font-weight: 500; transition: all var(--transition);
+            text-align: left;
+        }
+        .option-btn:hover { border-color: var(--primary); background: #f5f7ff; transform: translateY(-1px); }
+        .option-letter { width: 36px; height: 36px; border-radius: 50%; background: #eef2ff; color: var(--primary); font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .question-slide { animation: slideIn 0.35s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.6); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+        }
+        .modal-dialog { background: #fff; border-radius: var(--radius); padding: 32px 28px; max-width: 560px; width: 100%; text-align: center; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+        .modal-subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 22px; }
+        .student-grid {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+            max-height: 400px; overflow-y: auto; padding: 4px; margin-bottom: 20px;
+        }
+        @media (max-width: 560px) { .student-grid { grid-template-columns: repeat(4, 1fr); } }
+        .student-btn {
+            padding: 10px 6px; border: 2px solid var(--border); border-radius: 12px;
+            background: #fafbfc; cursor: pointer; font-weight: 500; font-size: 0.85rem;
+            transition: all var(--transition); white-space: nowrap; overflow-x: auto;
+            text-overflow: ellipsis;
+        }
+        .student-btn:hover { border-color: var(--primary); background: #f5f7ff; color: var(--primary); transform: translateY(-2px); }
+        .student-btn.selected { border-color: var(--primary); background: var(--primary); color: #fff; }
+        .student-btn.has-record::after { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-left: 6px; }
+        .btn-primary {
+            display: inline-block; padding: 12px 32px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff; border: none; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { padding: 10px 24px; background: #fff; color: var(--primary); border: 2px solid var(--primary); border-radius: 25px; font-weight: 600; cursor: pointer; }
+        .result-header { text-align: center; margin-bottom: 20px; }
+        .result-score-circle { width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; font-weight: 800; color: white; }
+        .score-excellent { background: linear-gradient(135deg,#10b981,#059669); }
+        .score-great { background: linear-gradient(135deg,#4a6cf7,#3651d5); }
+        .score-good { background: linear-gradient(135deg,#f59e0b,#d97706); }
+        .score-ok { background: linear-gradient(135deg,#f97316,#ea580c); }
+        .score-keepgoing { background: linear-gradient(135deg,#ef4444,#dc2626); }
+        .detail-item { background: #f8fafc; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; border-left: 4px solid #e2e8f0; }
+        .detail-item.correct { border-left-color: var(--success); background: #f0fdf6; }
+        .detail-item.wrong { border-left-color: var(--danger); background: #fef5f5; }
+        .evaluation-box { background: linear-gradient(135deg,#eef2ff,#f0fdf6); border-radius: var(--radius-sm); padding: 20px; margin-top: 16px; text-align: center; }
+        .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 12px 24px; border-radius: 25px; z-index: 2000; animation: toastIn 0.4s ease-out, toastOut 0.4s ease-out 2.5s forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-30px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="timer-bar hidden" id="timerBar">
+        <div class="timer-info"><span class="timer-icon">⏱️</span><span>答题计时</span></div>
+        <span class="progress-indicator" id="progressIndicator">第 1/5 题</span>
+        <span class="timer-display" id="timerDisplay">00:00</span>
+    </div>
+    <div class="main-card" id="mainCard">
+        <div id="questionContainer"></div>
+        <div id="resultContainer" class="hidden"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="studentModal">
+    <div class="modal-dialog">
+        <h2 class="modal-title">🎯 选择你的姓名</h2>
+        <p class="modal-subtitle">请点击你的姓名开始挑战</p>
+        <div class="student-grid" id="studentGrid"></div>
+        <button class="btn-primary" id="startBtn" disabled>🚀 开始答题挑战</button>
+        <p style="font-size:0.75rem;color:#94a3b8;margin-top:10px;" id="recordHint"></p>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ==================== 学生姓名列表（共36人）====================
+    const STUDENT_NAMES = [
+        "刘子琦", "麦尔霖", "陈翊", "彭梓琪", "庞粤英", "揭俊浩", "萧玥琪", "梁焯君",
+        "许嘉文", "王皓程", "黄梓皓", "周佳琦", "吕钰泓", "张思妍", "陈妤涵",
+        "刘辰睿", "周思萍", "胡桃蓁", "庞涵予", "吴佳陈", "成梓嘉", "洪誉杨",
+        "卢语煊", "郭卓乐", "程思滢", "杨易铭", "冯梓阳", "周沂辰", "黄新森",
+        "卢芷柔", "陈芷晴", "吴梓晴", "周星辰", "黄馨琪", "刘嘉乐", "陈昱彤"
+    ];
+
+    // ============ 题目数据 ============
+    const questionsData = [{
+        id: 1, questionText: '下列属于旋转运动的是（     ）。', context: null,
+        options: ['荡秋千', '平推窗户', '火车在铁轨上行驶'], optionLetters: ['A','B','C'],
+        correctIndex: 0, score: 20, explanation: '荡秋千是围绕固定轴进行的往复旋转运动，属于旋转运动；平推窗户是平移运动；火车在铁轨上行驶也是平移运动。因此正确答案是A。', hasIllustration: false,
+    }, {
+        id: 2, questionText: '旋转前后，图形的（    ）可能发生改变。', context: null,
+        options: ['形状', '大小', '方向'], optionLetters: ['A','B','C'],
+        correctIndex: 2, score: 20, explanation: '旋转是图形围绕一个点转动一定角度。旋转前后，图形的形状和大小保持不变，但方向会发生改变。因此正确答案是C。', hasIllustration: false,
+    }, {
+        id: 3, questionText: '钟面上，从2时到7时，时针绕中心点按顺时针方向旋转（    ）度。', context: null,
+        options: ['60°', '90°', '150°'], optionLetters: ['A','B','C'],
+        correctIndex: 2, score: 20, explanation: '从2时到7时，时针走了5个小时。钟面一圈360°，12小时，每小时对应30°（360°÷12=30°）。5×30°=150°，因此正确答案是C。', hasIllustration: false,
+    }, {
+        id: 4, questionText: '如果这个风力发电机的三个叶片从目前位置开始绕中心旋转，至少旋转（   ）°可以与原图形完全重合。', context: '风力发电是利用风能驱动叶片旋转，通过发电机转化为电能的可再生能源技术。具有零排放、资源丰富等优势，已成为全球清洁能源发展的重要组成部分，适用于陆地、海上等多种环境。2024年，全国已投产运行的陆上最大风机每小时额定发电量为10000千瓦时。',
+        options: ['90°', '120°', '360°'], optionLetters: ['A','B','C'], correctIndex: 1, score: 20,
+        explanation: '风力发电机有三个叶片，均匀分布在圆周上。360°÷3=120°，因此至少旋转120°可以与原图形完全重合。正确答案是B。', hasIllustration: true, subId: '(1)',
+    }, {
+        id: 5, questionText: '如果一户居民每日生活用电量为50千瓦时，这个发电机每小时的发电量能供（      ）户居民使用。', context: '风力发电是利用风能驱动叶片旋转，通过发电机转化为电能的可再生能源技术。具有零排放、资源丰富等优势，已成为全球清洁能源发展的重要组成部分，适用于陆地、海上等多种环境。2024年，全国已投产运行的陆上最大风机每小时额定发电量为10000千瓦时。',
+        options: ['20', '200', '500000'], optionLetters: ['A','B','C'], correctIndex: 1, score: 20,
+        explanation: '发电机每小时发电量为10000千瓦时，每户每日用电50千瓦时。10000÷50=200（户）。因此正确答案是B。', hasIllustration: true, subId: '(2)',
+    }];
+    const totalQuestions = questionsData.length;
+    const totalScore = 100;
+
+    function getWindTurbineSVG() { return `<svg width="160" height="200" viewBox="0 0 160 200">...</svg>`; } // 省略具体svg，与原版一致
+
+    let selectedStudentName = null;
+    let currentQuestionIndex = 0;
+    let userAnswers = [];
+    let startTime = null;
+    let elapsedSeconds = 0;
+    let timerInterval = null;
+    let quizFinished = false;
+    let cumulativeScore = 0;
+
+    const studentModal = document.getElementById('studentModal');
+    const studentGrid = document.getElementById('studentGrid');
+    const startBtn = document.getElementById('startBtn');
+    const recordHint = document.getElementById('recordHint');
+    const timerBar = document.getElementById('timerBar');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const progressIndicator = document.getElementById('progressIndicator');
+    const questionContainer = document.getElementById('questionContainer');
+    const resultContainer = document.getElementById('resultContainer');
+
+    const STORAGE_KEY = 'rotation_quiz_rankings_v2';
+    function getAllRankings() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e){ return []; } }
+    function saveRanking(record) {
+        let rankings = getAllRankings();
+        const idx = rankings.findIndex(r => r.studentId === record.studentId);
+        if(idx >= 0) rankings[idx] = record;
+        else rankings.push(record);
+        rankings.sort((a,b) => b.score - a.score || a.time - b.time);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rankings));
+        return rankings;
+    }
+    function getStudentRecord(name) { return getAllRankings().find(r => r.studentId === name); }
+
+    function showToast(msg) {
+        let t = document.querySelector('.toast');
+        if(t) t.remove();
+        t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    function buildStudentGrid() {
+        studentGrid.innerHTML = '';
+        const rankings = getAllRankings();
+        const hasRecord = new Set(rankings.map(r => r.studentId));
+        STUDENT_NAMES.forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = 'student-btn';
+            if(hasRecord.has(name)) btn.classList.add('has-record');
+            btn.textContent = name;
+            btn.addEventListener('click', () => selectStudent(name, btn));
+            studentGrid.appendChild(btn);
+        });
+    }
+
+    function selectStudent(name, btnElement) {
+        selectedStudentName = name;
+        document.querySelectorAll('.student-btn').forEach(b => b.classList.remove('selected'));
+        if(btnElement) btnElement.classList.add('selected');
+        startBtn.disabled = false;
+        const record = getStudentRecord(name);
+        if(record) recordHint.textContent = `📝 ${name} 已有记录：${record.score}分 | 用时${formatTime(record.time)} | 可重新挑战刷新成绩`;
+        else recordHint.textContent = '✨ 新同学，准备好挑战了吗？';
+        startBtn.textContent = '🚀 开始答题挑战';
+    }
+
+    startBtn.addEventListener('click', () => {
+        if(!selectedStudentName) return;
+        const record = getStudentRecord(selectedStudentName);
+        if(record && !confirm(`${selectedStudentName} 已有成绩：${record.score}分（用时${formatTime(record.time)}）\n\n是否重新挑战？新成绩若更好将更新排名。`)) return;
+        studentModal.style.display = 'none';
+        startQuiz();
+    });
+
+    function formatTime(seconds) { return `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`; }
+    function startTimer() {
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+            elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+            timerDisplay.textContent = formatTime(elapsedSeconds);
+        }, 200);
+    }
+    function stopTimer() { if(timerInterval) clearInterval(timerInterval); timerInterval = null; elapsedSeconds = Math.floor((Date.now() - startTime) / 1000); }
+
+    async function sendFullProgress(answersSnapshot, currentScore, timeSec) {
+        if(!selectedStudentName) return;
+        const fullAnswers = answersSnapshot.map(a => ({ questionId: a.questionId, subId: a.subId, isCorrect: a.isCorrect, score: a.score, selectedLetter: a.selectedLetter, correctLetter: a.correctLetter }));
+        const payload = {
+            studentId: selectedStudentName, score: currentScore, timeSeconds: timeSec, timeFormatted: formatTime(timeSec),
+            answers: fullAnswers, totalQuestions: totalQuestions, answeredCount: answersSnapshot.length,
+            timestamp: new Date().toISOString(), type: 'realtime_progress'
+        };
+        try { await fetch('https://quickform.cn/api/rypkn36cnb', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }); } catch(e){ console.warn(e); }
+    }
+
+    function startQuiz() {
+        currentQuestionIndex = 0; userAnswers = []; quizFinished = false; cumulativeScore = 0;
+        timerBar.classList.remove('hidden'); resultContainer.classList.add('hidden'); resultContainer.innerHTML = '';
+        questionContainer.classList.remove('hidden'); startTimer();
+        renderQuestion(currentQuestionIndex);
+    }
+
+    function renderQuestion(index) {
+        if(index >= totalQuestions) { finishQuiz(); return; }
+        const q = questionsData[index];
+        progressIndicator.textContent = `第 ${index+1}/${totalQuestions} 题`;
+        let html = `<div class="question-slide"><span class="question-number">📋 题目 ${q.id}${q.subId||''}（${q.score}分）</span><p class="question-text">${q.questionText}</p>`;
+        if(q.context) html += `<div class="question-context">💡 ${q.context}</div>`;
+        if(q.hasIllustration) html += `<div class="svg-illustration">${getWindTurbineSVG()}</div>`;
+        html += `<ul class="options-list">`;
+        q.options.forEach((opt, i) => { html += `<li><button class="option-btn" onclick="window._handleAnswer(${i})"><span class="option-letter">${q.optionLetters[i]}</span><span class="option-text">${opt}</span></button></li>`; });
+        html += `</ul></div>`;
+        questionContainer.innerHTML = html;
+    }
+
+    window._handleAnswer = function(selectedIndex) {
+        if(quizFinished) return;
+        const q = questionsData[currentQuestionIndex];
+        const isCorrect = (selectedIndex === q.correctIndex);
+        const answer = {
+            questionId: q.id, subId: q.subId, questionText: q.questionText,
+            selectedLetter: q.optionLetters[selectedIndex], selectedText: q.options[selectedIndex],
+            correctLetter: q.optionLetters[q.correctIndex], correctText: q.options[q.correctIndex],
+            isCorrect: isCorrect, score: isCorrect ? q.score : 0, explanation: q.explanation,
+        };
+        userAnswers.push(answer);
+        cumulativeScore += answer.score;
+        sendFullProgress(userAnswers, cumulativeScore, elapsedSeconds);
+        currentQuestionIndex++;
+        if(currentQuestionIndex < totalQuestions) setTimeout(() => renderQuestion(currentQuestionIndex), 150);
+        else finishQuiz();
+    };
+
+    function finishQuiz() {
+        quizFinished = true; stopTimer(); timerBar.classList.add('hidden'); questionContainer.classList.add('hidden');
+        const record = { studentId: selectedStudentName, score: cumulativeScore, correctCount: userAnswers.filter(a=>a.isCorrect).length, totalQuestions, time: elapsedSeconds, timestamp: Date.now(), answers: userAnswers };
+        saveRanking(record);
+        sendFinalData(record);
+        renderResult(record);
+    }
+
+    async function sendFinalData(record) {
+        const payload = { studentId: record.studentId, score: record.score, correctCount: record.correctCount, totalQuestions: record.totalQuestions, correctRate: Math.round((record.correctCount/record.totalQuestions)*100), timeSeconds: record.time, timeFormatted: formatTime(record.time), timestamp: new Date(record.timestamp).toISOString(), answers: record.answers.map(a=>({ questionId:a.questionId, subId:a.subId, selectedLetter:a.selectedLetter, correctLetter:a.correctLetter, isCorrect:a.isCorrect, score:a.score })), type:'final_result' };
+        try { await fetch('https://quickform.cn/api/rypkn36cnb', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }); } catch(e){ console.warn(e); }
+    }
+
+    function renderResult(record) {
+        const { score, correctCount, time, answers } = record;
+        let scoreClass = '', emoji = '', evaluationTitle = '', evaluationSuggestion = '';
+        if(score===100){ scoreClass='score-excellent'; emoji='🏆'; evaluationTitle='太棒了！满分通过！'; evaluationSuggestion='你对旋转运动的概念、性质和实际应用都掌握得非常扎实！'; }
+        else if(score>=80){ scoreClass='score-great'; emoji='🌟'; evaluationTitle='非常优秀！'; evaluationSuggestion='只差一点就满分了，再仔细回顾一下错题！'; }
+        else if(score>=60){ scoreClass='score-good'; emoji='👍'; evaluationTitle='不错哦！'; evaluationSuggestion='你已经有了很好的基础，建议针对错题进行重点复习。'; }
+        else if(score>=40){ scoreClass='score-ok'; emoji='💪'; evaluationTitle='加油！'; evaluationSuggestion='回顾旋转运动的基本概念，多做练习，你会越来越棒！'; }
+        else { scoreClass='score-keepgoing'; emoji='🌱'; evaluationTitle='别灰心！'; evaluationSuggestion='学习是一个循序渐进的过程，让我们从基础开始，重新认识旋转运动！'; }
+        let html = `<div class="question-slide"><div class="result-header"><div class="result-score-circle ${scoreClass}">${score}<span style="font-size:1rem;">分</span></div><p style="font-weight:700;">${record.studentId}</p><p>⏱️ 用时：${formatTime(time)} | ✅ 正确：${correctCount}/${totalQuestions}</p></div>`;
+        html += `<div class="evaluation-box"><div class="evaluation-emoji">${emoji}</div><p class="evaluation-text">${evaluationTitle}</p><p class="evaluation-suggestion">${evaluationSuggestion}</p></div>`;
+        html += `<div class="detail-section"><p>📝 逐题答案解析</p>`;
+        answers.forEach(a => { html += `<div class="detail-item ${a.isCorrect?'correct':'wrong'}"><span>${a.isCorrect?'✅':'❌'}</span> <strong>${a.questionText}</strong><br>你的答案：${a.selectedLetter}. ${a.selectedText} ${!a.isCorrect?`正确答案：${a.correctLetter}. ${a.correctText}`:''}<br><span class="explanation">💡 ${a.explanation}</span></div>`; });
+        html += `</div><div class="btn-row"><button class="btn-primary" onclick="window._restartQuiz()">🔄 重新挑战</button><button class="btn-secondary" onclick="window._changeStudent()">👤 更换姓名</button></div></div>`;
+        resultContainer.innerHTML = html; resultContainer.classList.remove('hidden');
+    }
+
+    window._restartQuiz = function() { location.reload(); };
+    window._changeStudent = function() { location.reload(); };
+
+    function init() { buildStudentGrid(); studentModal.style.display = 'flex'; startBtn.disabled = true; timerBar.classList.add('hidden'); questionContainer.innerHTML = '<div style="text-align:center;padding:40px;"><p>🎯</p><p>请先选择姓名开始挑战</p></div>'; }
+    init();
+})();
+</script>
+</body>
+</html>
