@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌪️ 旋转运动知识挑战赛 - 实时反馈版</title>
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary: #4a6cf7;
+            --primary-dark: #3651d5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #e8eef5 0%, #dce3ed 30%, #eef1f7 60%, #e3e8f2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -180px;
+            right: -120px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(74, 108, 247, 0.07) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: -100px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 680px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timer-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 14px 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+        }
+        .timer-bar.hidden {
+            display: none;
+        }
+        .timer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .timer-icon {
+            font-size: 1.4rem;
+            animation: pulse-timer 2s ease-in-out infinite;
+        }
+        @keyframes pulse-timer {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+        }
+        .timer-display {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+            min-width: 70px;
+            text-align: right;
+            transition: color var(--transition);
+        }
+        .timer-display.warning {
+            color: var(--warning);
+            animation: blink-warning 0.6s ease-in-out 3;
+        }
+        @keyframes blink-warning {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
+        .progress-indicator {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 28px 30px;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+            min-height: 320px;
+            position: relative;
+            overflow: hidden;
+        }
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), #818cf8, var(--success));
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+        }
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+        .question-context {
+            background: #f8fafc;
+            border-left: 3px solid #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 18px;
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+        .svg-illustration {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
+        }
+        .svg-illustration svg {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08));
+        }
+
+        .options-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .option-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: #fafbfc;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text);
+            transition: all var(--transition);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .option-btn:hover {
+            border-color: var(--primary);
+            background: #f5f7ff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(74, 108, 247, 0.12);
+        }
+        .option-btn:active {
+            transform: scale(0.985);
+            transition: transform 0.1s;
+        }
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #eef2ff;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            transition: all var(--transition);
+        }
+        .option-btn:hover .option-letter {
+            background: var(--primary);
+            color: #fff;
+            transform: scale(1.05);
+        }
+        .option-text {
+            flex: 1;
+        }
+
+        .question-slide {
+            animation: slideIn 0.35s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .modal-dialog {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .modal-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 22px;
+        }
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        @media (max-width: 500px) {
+            .student-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 6px;
+            }
+        }
+        .student-btn {
+            aspect-ratio: 1;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: #fafbfc;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+        .student-btn:hover {
+            border-color: var(--primary);
+            background: #f5f7ff;
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);
+        }
+        .student-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(74, 108, 247, 0.35);
+            transform: translateY(-2px);
+        }
+        .student-btn.has-record {
+            position: relative;
+        }
+        .student-btn.has-record::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            border: 1.5px solid #fff;
+        }
+        .modal-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .modal-input {
+            width: 100px;
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            font-family: var(--font-mono);
+            transition: border-color var(--transition);
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+        }
+        .btn-primary {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(74, 108, 247, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(74, 108, 247, 0.4);
+        }
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-secondary {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #fff;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .btn-secondary:hover {
+            background: #f5f7ff;
+            transform: translateY(-1px);
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .result-score-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #fff;
+            position: relative;
+            letter-spacing: 1px;
+        }
+        .score-excellent {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 28px rgba(16, 185, 129, 0.4);
+        }
+        .score-great {
+            background: linear-gradient(135deg, #4a6cf7, #3651d5);
+            box-shadow: 0 8px 28px rgba(74, 108, 247, 0.4);
+        }
+        .score-good {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 8px 28px rgba(245, 158, 11, 0.4);
+        }
+        .score-ok {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 8px 28px rgba(249, 115, 22, 0.4);
+        }
+        .score-keepgoing {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 8px 28px rgba(239, 68, 68, 0.35);
+        }
+        .result-time {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .result-time strong {
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+        }
+
+        .detail-section {
+            margin-top: 20px;
+            border-top: 2px solid #f1f5f9;
+            padding-top: 16px;
+        }
+        .detail-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+        .detail-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-left: 4px solid #e2e8f0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            transition: all var(--transition);
+        }
+        .detail-item.correct {
+            border-left-color: var(--success);
+            background: #f0fdf6;
+        }
+        .detail-item.wrong {
+            border-left-color: var(--danger);
+            background: #fef5f5;
+        }
+        .detail-item .result-icon {
+            font-size: 1.2rem;
+            margin-right: 4px;
+        }
+        .detail-item .user-answer {
+            font-weight: 600;
+        }
+        .detail-item .correct-answer {
+            color: var(--success);
+            font-weight: 600;
+        }
+        .detail-item .wrong-answer {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        .detail-item .explanation {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        .evaluation-box {
+            background: linear-gradient(135deg, #eef2ff, #f0fdf6);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin-top: 16px;
+            text-align: center;
+            border: 1px solid #e0e7ff;
+        }
+        .evaluation-emoji {
+            font-size: 3rem;
+            margin-bottom: 8px;
+            animation: bounce-emoji 1s ease-in-out;
+        }
+        @keyframes bounce-emoji {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-18px);
+            }
+            50% {
+                transform: translateY(0);
+            }
+            70% {
+                transform: translateY(-8px);
+            }
+        }
+        .evaluation-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .evaluation-suggestion {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            z-index: 2000;
+            animation: toastIn 0.4s ease-out, toastOut 0.4s ease-out 2.5s forwards;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
+            .main-card {
+                padding: 20px 16px;
+            }
+            .question-text {
+                font-size: 1rem;
+            }
+            .option-btn {
+                padding: 12px 14px;
+                font-size: 0.9rem;
+            }
+            .timer-display {
+                font-size: 1.2rem;
+                min-width: 55px;
+            }
+            .modal-dialog {
+                padding: 24px 16px;
+            }
+            .student-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 5px;
+            }
+            .student-btn {
+                font-size: 0.75rem;
+                border-radius: 8px;
+            }
+            .result-score-circle {
+                width: 90px;
+                height: 90px;
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="timer-bar hidden" id="timerBar">
+            <div class="timer-info">
+                <span class="timer-icon">⏱️</span>
+                <span>答题计时</span>
+            </div>
+            <span class="progress-indicator" id="progressIndicator">第 1/5 题</span>
+            <span class="timer-display" id="timerDisplay">00:00</span>
+        </div>
+
+        <div class="main-card" id="mainCard">
+            <div id="questionContainer"></div>
+            <div id="resultContainer" class="hidden"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="studentModal">
+        <div class="modal-dialog">
+            <h2 class="modal-title">🎯 选择你的学号</h2>
+            <p class="modal-subtitle">请选择学号开始答题挑战（1-40号）</p>
+            <div class="student-grid" id="studentGrid"></div>
+            <div class="modal-input-row">
+                <span style="color:#64748b;font-weight:500;">或直接输入：</span>
+                <input type="number" class="modal-input" id="studentInput" min="1" max="40" placeholder="学号">
+                <button class="btn-secondary" id="quickSelectBtn" style="padding:10px 16px;">确定</button>
+            </div>
+            <button class="btn-primary" id="startBtn" disabled>🚀 开始答题挑战</button>
+            <p style="font-size:0.75rem;color:#94a3b8;margin-top:10px;" id="recordHint"></p>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ============ 题目数据 ============
+            const questionsData = [{
+                id: 1,
+                questionText: '下列属于旋转运动的是（     ）。',
+                context: null,
+                options: ['荡秋千', '平推窗户', '火车在铁轨上行驶'],
+                optionLetters: ['A', 'B', 'C'],
+                correctIndex: 0,
+                score: 20,
+                explanation: '荡秋千是围绕固定轴进行的往复旋转运动，属于旋转运动；平推窗户是平移运动；火车在铁轨上行驶也是平移运动。因此正确答案是A。',
+                hasIllustration: false,
+            }, {
+                id: 2,
+                questionText: '旋转前后，图形的（    ）可能发生改变。',
+                context: null,
+                options: ['形状', '大小', '方向'],
+                optionLetters: ['A', 'B', 'C'],
+                correctIndex: 2,
+                score: 20,
+                explanation: '旋转是图形围绕一个点转动一定角度。旋转前后，图形的形状和大小保持不变，但方向会发生改变。因此正确答案是C。',
+                hasIllustration: false,
+            }, {
+                id: 3,
+                questionText: '钟面上，从2时到7时，时针绕中心点按顺时针方向旋转（    ）度。',
+                context: null,
+                options: ['60°', '90°', '150°'],
+                optionLetters: ['A', 'B', 'C'],
+                correctIndex: 2,
+                score: 20,
+                explanation: '从2时到7时，时针走了5个小时。钟面一圈360°，12小时，每小时对应30°（360°÷12=30°）。5×30°=150°，因此正确答案是C。',
+                hasIllustration: false,
+            }, {
+                id: 4,
+                questionText: '如果这个风力发电机的三个叶片从目前位置开始绕中心旋转，至少旋转（   ）°可以与原图形完全重合。',
+                context: '风力发电是利用风能驱动叶片旋转，通过发电机转化为电能的可再生能源技术。具有零排放、资源丰富等优势，已成为全球清洁能源发展的重要组成部分，适用于陆地、海上等多种环境。2024年，全国已投产运行的陆上最大风机每小时额定发电量为10000千瓦时。',
+                options: ['90°', '120°', '360°'],
+                optionLetters: ['A', 'B', 'C'],
+                correctIndex: 1,
+                score: 20,
+                explanation: '风力发电机有三个叶片，均匀分布在圆周上。360°÷3=120°，因此至少旋转120°可以与原图形完全重合。正确答案是B。',
+                hasIllustration: true,
+                subId: '(1)',
+            }, {
+                id: 5,
+                questionText: '如果一户居民每日生活用电量为50千瓦时，这个发电机每小时的发电量能供（      ）户居民使用。',
+                context: '风力发电是利用风能驱动叶片旋转，通过发电机转化为电能的可再生能源技术。具有零排放、资源丰富等优势，已成为全球清洁能源发展的重要组成部分，适用于陆地、海上等多种环境。2024年，全国已投产运行的陆上最大风机每小时额定发电量为10000千瓦时。',
+                options: ['20', '200', '500000'],
+                optionLetters: ['A', 'B', 'C'],
+                correctIndex: 1,
+                score: 20,
+                explanation: '发电机每小时发电量为10000千瓦时，每户每日用电50千瓦时。10000÷50=200（户）。因此正确答案是B。',
+                hasIllustration: true,
+                subId: '(2)',
+            }];
+
+            const totalQuestions = questionsData.length;
+            const totalScore = 100;
+
+            // ============ SVG ============
+            function getWindTurbineSVG() {
+                return `<svg width="160" height="200" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="towerGrad" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#cbd5e1"/>
+                            <stop offset="40%" stop-color="#f1f5f9"/>
+                            <stop offset="100%" stop-color="#94a3b8"/>
+                        </linearGradient>
+                        <linearGradient id="bladeGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#e2e8f0"/>
+                            <stop offset="100%" stop-color="#f8fafc"/>
+                        </linearGradient>
+                    </defs>
+                    <polygon points="75,80 85,80 82,175 78,175" fill="url(#towerGrad)" stroke="#94a3b8" stroke-width="1"/>
+                    <rect x="68" y="170" width="24" height="8" rx="3" fill="#94a3b8"/>
+                    <rect x="70" y="72" width="20" height="14" rx="4" fill="#64748b"/>
+                    <circle cx="80" cy="79" r="4" fill="#475569"/>
+                    <g transform="translate(80,79) rotate(-30)">
+                        <ellipse cx="0" cy="-38" rx="7" ry="28" fill="url(#bladeGrad)" stroke="#cbd5e1" stroke-width="1.5" transform="rotate(0)"/>
+                        <rect x="-3" y="-62" width="6" height="18" rx="3" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+                    </g>
+                    <g transform="translate(80,79) rotate(90)">
+                        <ellipse cx="0" cy="-38" rx="7" ry="28" fill="url(#bladeGrad)" stroke="#cbd5e1" stroke-width="1.5"/>
+                        <rect x="-3" y="-62" width="6" height="18" rx="3" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+                    </g>
+                    <g transform="translate(80,79) rotate(210)">
+                        <ellipse cx="0" cy="-38" rx="7" ry="28" fill="url(#bladeGrad)" stroke="#cbd5e1" stroke-width="1.5"/>
+                        <rect x="-3" y="-62" width="6" height="18" rx="3" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+                    </g>
+                    <circle cx="80" cy="79" r="6" fill="#475569" stroke="#334155" stroke-width="2"/>
+                    <circle cx="80" cy="79" r="2.5" fill="#f8fafc"/>
+                    <ellipse cx="80" cy="182" rx="40" ry="6" fill="#e2e8f0" opacity="0.5"/>
+                </svg>`;
+            }
+
+            // ============ 全局状态 ============
+            let selectedStudentId = null;
+            let currentQuestionIndex = 0;
+            let userAnswers = [];
+            let startTime = null;
+            let elapsedSeconds = 0;
+            let timerInterval = null;
+            let quizFinished = false;
+            let cumulativeScore = 0;
+
+            // ============ DOM ============
+            const studentModal = document.getElementById('studentModal');
+            const studentGrid = document.getElementById('studentGrid');
+            const studentInput = document.getElementById('studentInput');
+            const quickSelectBtn = document.getElementById('quickSelectBtn');
+            const startBtn = document.getElementById('startBtn');
+            const recordHint = document.getElementById('recordHint');
+            const timerBar = document.getElementById('timerBar');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const progressIndicator = document.getElementById('progressIndicator');
+            const questionContainer = document.getElementById('questionContainer');
+            const resultContainer = document.getElementById('resultContainer');
+            const mainCard = document.getElementById('mainCard');
+
+            // ============ LocalStorage ============
+            const STORAGE_KEY = 'rotation_quiz_rankings_v2';
+
+            function getAllRankings() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEY);
+                    return data ? JSON.parse(data) : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function saveRanking(record) {
+                const rankings = getAllRankings();
+                const existingIndex = rankings.findIndex(r => r.studentId === record.studentId);
+                if (existingIndex >= 0) {
+                    const existing = rankings[existingIndex];
+                    if (record.score > existing.score ||
+                        (record.score === existing.score && record.time < existing.time)) {
+                        rankings[existingIndex] = record;
+                    }
+                } else {
+                    rankings.push(record);
+                }
+                rankings.sort((a, b) => {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return a.time - b.time;
+                });
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(rankings));
+                } catch (e) {
+                    showToast('⚠️ 本地存储空间不足，排名可能无法保存');
+                }
+                return rankings;
+            }
+
+            function getStudentRecord(studentId) {
+                const rankings = getAllRankings();
+                return rankings.find(r => r.studentId === studentId) || null;
+            }
+
+            // ============ Toast ============
+            function showToast(message) {
+                const existing = document.querySelector('.toast');
+                if (existing) existing.remove();
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+
+            // ============ 学号模态框 ============
+            function buildStudentGrid() {
+                studentGrid.innerHTML = '';
+                const rankings = getAllRankings();
+                const hasRecordIds = new Set(rankings.map(r => r.studentId));
+                for (let i = 1; i <= 40; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'student-btn';
+                    if (hasRecordIds.has(i)) btn.classList.add('has-record');
+                    btn.textContent = i;
+                    btn.dataset.id = i;
+                    btn.addEventListener('click', () => selectStudent(i, btn));
+                    studentGrid.appendChild(btn);
+                }
+            }
+
+            function selectStudent(id, btnElement) {
+                selectedStudentId = id;
+                studentInput.value = id;
+                document.querySelectorAll('.student-btn').forEach(b => b.classList.remove('selected'));
+                if (btnElement) btnElement.classList.add('selected');
+                else {
+                    const targetBtn = document.querySelector(`.student-btn[data-id="${id}"]`);
+                    if (targetBtn) targetBtn.classList.add('selected');
+                }
+                startBtn.disabled = false;
+                startBtn.textContent = '🚀 开始答题挑战';
+                const record = getStudentRecord(id);
+                if (record) {
+                    recordHint.textContent = `📝 学号${id}已有记录：${record.score}分 | 用时${formatTime(record.time)} | 可重新挑战刷新成绩`;
+                    recordHint.style.color = '#f59e0b';
+                } else {
+                    recordHint.textContent = '✨ 新学号，准备好挑战了吗？';
+                    recordHint.style.color = '#94a3b8';
+                }
+            }
+
+            studentInput.addEventListener('input', function() {
+                const val = parseInt(this.value);
+                if (val >= 1 && val <= 40) selectStudent(val, null);
+                else {
+                    selectedStudentId = null;
+                    startBtn.disabled = true;
+                    document.querySelectorAll('.student-btn').forEach(b => b.classList.remove('selected'));
+                    recordHint.textContent = '';
+                }
+            });
+
+            quickSelectBtn.addEventListener('click', () => {
+                const val = parseInt(studentInput.value);
+                if (val >= 1 && val <= 40) {
+                    selectStudent(val, null);
+                    const targetBtn = document.querySelector(`.student-btn[data-id="${val}"]`);
+                    if (targetBtn) targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else showToast('⚠️ 请输入1-40之间的学号');
+            });
+
+            startBtn.addEventListener('click', () => {
+                if (!selectedStudentId) return;
+                const record = getStudentRecord(selectedStudentId);
+                if (record) {
+                    const confirmRetry = confirm(`学号${selectedStudentId}已有成绩：${record.score}分（用时${formatTime(record.time)}）\n\n是否重新挑战？新成绩若更好将更新排名。`);
+                    if (!confirmRetry) return;
+                }
+                studentModal.style.display = 'none';
+                startQuiz();
+            });
+
+            // ============ 计时 ============
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            }
+
+            function startTimer() {
+                startTime = Date.now();
+                elapsedSeconds = 0;
+                timerDisplay.textContent = '00:00';
+                timerDisplay.classList.remove('warning');
+                timerInterval = setInterval(() => {
+                    elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                    timerDisplay.textContent = formatTime(elapsedSeconds);
+                    if (elapsedSeconds > 180 && !timerDisplay.classList.contains('warning')) timerDisplay.classList.add('warning');
+                }, 200);
+            }
+
+            function stopTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = null;
+                elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                timerDisplay.textContent = formatTime(elapsedSeconds);
+                timerDisplay.classList.remove('warning');
+            }
+
+            // ============ 核心修改：每答一题上传完整答题记录 ============
+            async function sendFullProgress(answersSnapshot, currentScore, timeSec) {
+                if (!selectedStudentId) return;
+                // 构建完整的答案数组（供教师端统计每题正确率）
+                const fullAnswers = answersSnapshot.map(a => ({
+                    questionId: a.questionId,
+                    subId: a.subId || null,
+                    isCorrect: a.isCorrect,
+                    score: a.score,
+                    selectedLetter: a.selectedLetter,
+                    correctLetter: a.correctLetter
+                }));
+                const payload = {
+                    studentId: selectedStudentId,
+                    score: currentScore,           // 累计总分（满分100）
+                    timeSeconds: timeSec,
+                    timeFormatted: formatTime(timeSec),
+                    answers: fullAnswers,          // 完整的答题记录
+                    totalQuestions: totalQuestions,
+                    answeredCount: answersSnapshot.length,
+                    timestamp: new Date().toISOString(),
+                    type: 'realtime_progress'
+                };
+                try {
+                    await fetch('https://quickform.cn/api/rypkn36cnb', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    console.log(`📡 实时上传 | 学号:${selectedStudentId} 已完成${answersSnapshot.length}题 累计得分:${currentScore}`);
+                } catch (err) {
+                    console.warn('实时上传失败', err.message);
+                }
+            }
+
+            // ============ 答题流程 ============
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                userAnswers = [];
+                quizFinished = false;
+                cumulativeScore = 0;
+                timerBar.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+                resultContainer.innerHTML = '';
+                questionContainer.classList.remove('hidden');
+                questionContainer.innerHTML = '';
+                startTimer();
+                renderQuestion(currentQuestionIndex);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function renderQuestion(index) {
+                if (index >= totalQuestions) {
+                    finishQuiz();
+                    return;
+                }
+                const q = questionsData[index];
+                progressIndicator.textContent = `第 ${index + 1}/${totalQuestions} 题`;
+                let html = '<div class="question-slide">';
+                let qLabel = `题目 ${q.id}`;
+                if (q.subId) qLabel += ` ${q.subId}`;
+                html += `<span class="question-number">📋 ${qLabel}（${q.score}分）</span>`;
+                html += `<p class="question-text">${q.questionText}</p>`;
+                if (q.context) html += `<div class="question-context">💡 ${q.context}</div>`;
+                if (q.hasIllustration) html += `<div class="svg-illustration">${getWindTurbineSVG()}</div>`;
+                html += '<ul class="options-list">';
+                for (let i = 0; i < q.options.length; i++) {
+                    html += `<li><button class="option-btn" data-option-index="${i}" onclick="window._handleAnswer(${i})"><span class="option-letter">${q.optionLetters[i]}</span><span class="option-text">${q.options[i]}</span></button></li>`;
+                }
+                html += '</ul></div>';
+                questionContainer.innerHTML = html;
+                mainCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            window._handleAnswer = function(selectedIndex) {
+                if (quizFinished) return;
+                const q = questionsData[currentQuestionIndex];
+                const isCorrect = (selectedIndex === q.correctIndex);
+                const answerData = {
+                    questionId: q.id,
+                    subId: q.subId || null,
+                    questionText: q.questionText,
+                    selectedIndex: selectedIndex,
+                    selectedLetter: q.optionLetters[selectedIndex],
+                    selectedText: q.options[selectedIndex],
+                    correctIndex: q.correctIndex,
+                    correctLetter: q.optionLetters[q.correctIndex],
+                    correctText: q.options[q.correctIndex],
+                    isCorrect: isCorrect,
+                    score: isCorrect ? q.score : 0,
+                    explanation: q.explanation,
+                    hasIllustration: q.hasIllustration,
+                    context: q.context || null,
+                };
+                userAnswers.push(answerData);
+                cumulativeScore += answerData.score;
+
+                // 立即上传完整进度（包含所有已答题记录）
+                sendFullProgress(userAnswers, cumulativeScore, elapsedSeconds);
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < totalQuestions) {
+                    setTimeout(() => renderQuestion(currentQuestionIndex), 150);
+                } else {
+                    finishQuiz();
+                }
+            };
+
+            function finishQuiz() {
+                quizFinished = true;
+                stopTimer();
+                timerBar.classList.add('hidden');
+                questionContainer.classList.add('hidden');
+                questionContainer.innerHTML = '';
+
+                const totalCorrect = userAnswers.filter(a => a.isCorrect).length;
+                const earnedScore = cumulativeScore;
+                const timeTaken = elapsedSeconds;
+
+                const record = {
+                    studentId: selectedStudentId,
+                    score: earnedScore,
+                    correctCount: totalCorrect,
+                    totalQuestions: totalQuestions,
+                    time: timeTaken,
+                    timestamp: Date.now(),
+                    answers: userAnswers,
+                };
+                saveRanking(record);
+                // 最终完整上传
+                sendFinalData(record);
+                renderResult(record);
+            }
+
+            async function sendFinalData(record) {
+                const payload = {
+                    studentId: record.studentId,
+                    score: record.score,
+                    correctCount: record.correctCount,
+                    totalQuestions: record.totalQuestions,
+                    correctRate: Math.round((record.correctCount / record.totalQuestions) * 100),
+                    timeSeconds: record.time,
+                    timeFormatted: formatTime(record.time),
+                    timestamp: new Date(record.timestamp).toISOString(),
+                    answers: record.answers.map(a => ({
+                        questionId: a.questionId,
+                        subId: a.subId,
+                        selectedLetter: a.selectedLetter,
+                        correctLetter: a.correctLetter,
+                        isCorrect: a.isCorrect,
+                        score: a.score,
+                    })),
+                    type: 'final_result'
+                };
+                try {
+                    await fetch('https://quickform.cn/api/rypkn36cnb', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    console.log('✅ 最终成绩已上传');
+                } catch (err) {
+                    console.warn('最终上传失败', err.message);
+                }
+            }
+
+            // ============ 结果页 ============
+            function renderResult(record) {
+                const { score, correctCount, time, answers } = record;
+                const correctRate = Math.round((correctCount / totalQuestions) * 100);
+                let scoreClass = '', emoji = '', evaluationTitle = '', evaluationSuggestion = '';
+                if (score === 100) { scoreClass = 'score-excellent'; emoji = '🏆'; evaluationTitle = '太棒了！满分通过！你是旋转运动的小专家！'; evaluationSuggestion = '你对旋转运动的概念、性质和实际应用都掌握得非常扎实，继续保持这份对知识的热爱，未来可期！'; }
+                else if (score >= 80) { scoreClass = 'score-great'; emoji = '🌟'; evaluationTitle = '非常优秀！你对旋转运动理解得很深入！'; evaluationSuggestion = '只差一点就满分了，再仔细回顾一下错题，相信下次你一定能拿满分！'; }
+                else if (score >= 60) { scoreClass = 'score-good'; emoji = '👍'; evaluationTitle = '不错哦！已经掌握了基础知识！'; evaluationSuggestion = '你已经有了很好的基础，建议针对错题进行重点复习，成绩一定会更上一层楼！'; }
+                else if (score >= 40) { scoreClass = 'score-ok'; emoji = '💪'; evaluationTitle = '加油！你已经有了一定的基础！'; evaluationSuggestion = '每一次尝试都是进步的开始。建议回顾旋转运动的基本概念，多做练习，你一定会越来越棒！'; }
+                else { scoreClass = 'score-keepgoing'; emoji = '🌱'; evaluationTitle = '别灰心！学习是一个循序渐进的过程！'; evaluationSuggestion = '每个人的学习节奏不同，重要的是你在努力。让我们从基础开始，重新认识旋转运动，下次一定会更好！'; }
+                let html = '<div class="question-slide"><div class="result-header">';
+                html += `<div class="result-score-circle ${scoreClass}">${score}<span style="font-size:1rem;">分</span></div>`;
+                html += `<p style="font-weight:700;font-size:1.2rem;color:#1e293b;">学号：${record.studentId}</p>`;
+                html += `<p class="result-time">⏱️ 答题用时：<strong>${formatTime(time)}</strong> | ✅ 正确：<strong>${correctCount}/${totalQuestions}</strong> | 正确率：<strong>${correctRate}%</strong></p></div>`;
+                html += `<div class="evaluation-box"><div class="evaluation-emoji">${emoji}</div><p class="evaluation-text">${evaluationTitle}</p><p class="evaluation-suggestion">${evaluationSuggestion}</p></div>`;
+                html += '<div class="detail-section"><p class="detail-title">📝 逐题答案解析</p>';
+                answers.forEach((a) => {
+                    const cls = a.isCorrect ? 'correct' : 'wrong';
+                    const icon = a.isCorrect ? '✅' : '❌';
+                    let qLabel = `题目${a.questionId}`;
+                    if (a.subId) qLabel += a.subId;
+                    html += `<div class="detail-item ${cls}"><span class="result-icon">${icon}</span> <strong>${qLabel}：</strong>${a.questionText}<br>`;
+                    html += `<span>你的答案：<span class="${a.isCorrect ? 'correct-answer' : 'wrong-answer'}">${a.selectedLetter}. ${a.selectedText}</span></span>`;
+                    if (!a.isCorrect) html += `<span> | 正确答案：<span class="correct-answer">${a.correctLetter}. ${a.correctText}</span></span>`;
+                    html += `<br><span class="explanation">💡 ${a.explanation}</span></div>`;
+                });
+                html += '</div><div class="btn-row">';
+                html += `<button class="btn-primary" onclick="window._restartQuiz()">🔄 重新挑战</button>`;
+                html += `<button class="btn-secondary" onclick="window._changeStudent()">👤 更换学号</button></div></div>`;
+                resultContainer.innerHTML = html;
+                resultContainer.classList.remove('hidden');
+                mainCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            window._restartQuiz = function() {
+                resultContainer.classList.add('hidden');
+                resultContainer.innerHTML = '';
+                questionContainer.classList.remove('hidden');
+                currentQuestionIndex = 0;
+                userAnswers = [];
+                quizFinished = false;
+                cumulativeScore = 0;
+                timerBar.classList.remove('hidden');
+                startTimer();
+                renderQuestion(0);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            window._changeStudent = function() {
+                stopTimer();
+                timerBar.classList.add('hidden');
+                questionContainer.classList.add('hidden');
+                resultContainer.classList.add('hidden');
+                currentQuestionIndex = 0;
+                userAnswers = [];
+                quizFinished = false;
+                cumulativeScore = 0;
+                selectedStudentId = null;
+                startBtn.disabled = true;
+                recordHint.textContent = '';
+                studentInput.value = '';
+                document.querySelectorAll('.student-btn').forEach(b => b.classList.remove('selected'));
+                studentModal.style.display = 'flex';
+                buildStudentGrid();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            function init() {
+                buildStudentGrid();
+                studentModal.style.display = 'flex';
+                startBtn.disabled = true;
+                timerBar.classList.add('hidden');
+                questionContainer.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#94a3b8;"><p style="font-size:3rem;">🎯</p><p style="font-size:1.1rem;font-weight:500;">请先选择学号开始挑战</p><p style="font-size:0.85rem;">比拼答题速度与正确率</p></div>';
+                resultContainer.classList.add('hidden');
+            }
+            studentInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { const val = parseInt(this.value); if (val>=1&&val<=40) { selectStudent(val, null); if (!startBtn.disabled) startBtn.click(); } } });
+            init();
+        })();
+    </script>
+</body>
+</html>
