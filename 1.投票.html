@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>傅科摆实验投票 | 小球旋转运动投票</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #eef2f7 0%, #dce5ec 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .vote-card {
+            max-width: 620px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .vote-header {
+            background: #1e2a3e;
+            background-image: radial-gradient(circle at 10% 30%, #2c3e4e, #0f1a24);
+            padding: 1.8rem 1.5rem;
+            text-align: center;
+            border-bottom: 4px solid #f5b042;
+        }
+
+        .vote-header h1 {
+            color: white;
+            font-size: 1.8rem;
+            letter-spacing: -0.2px;
+            font-weight: 600;
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .vote-header h1::before {
+            content: "⚙️";
+            font-size: 1.9rem;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
+        }
+
+        .vote-header h1::after {
+            content: "🌍";
+            font-size: 1.9rem;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
+        }
+
+        .sub {
+            color: #cbd5e1;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            background: rgba(0,0,0,0.3);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+
+        .vote-content {
+            padding: 2rem 2rem 1.8rem;
+        }
+
+        .loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #e2e8f0;
+            border-top: 5px solid #1e6f5c;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #2d3e50;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .vote-form {
+            transition: opacity 0.2s;
+        }
+
+        .vote-question {
+            font-size: 1.4rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1.8rem;
+            color: #0f2b35;
+            background: #f0f6fa;
+            padding: 12px 16px;
+            border-radius: 60px;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .radio-group {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            padding: 1.2rem 1rem;
+            border-radius: 48px;
+            box-shadow: inset 0 1px 3px #0001, 0 2px 4px #fff8;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 1.3rem;
+            font-weight: 500;
+            padding: 8px 24px;
+            border-radius: 40px;
+            transition: background 0.2s;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .radio-option input {
+            width: 1.2rem;
+            height: 1.2rem;
+            accent-color: #2c7a6e;
+            cursor: pointer;
+        }
+
+        .radio-option span {
+            color: #1f3b42;
+            font-size: 1.2rem;
+        }
+
+        .radio-option:hover {
+            background: #eef2f6;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #2c7a6e;
+            border: none;
+            padding: 14px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 5px 0 #1e4b43;
+            letter-spacing: 1px;
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: #1e6f5c;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #1e4b43;
+        }
+
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1e4b43;
+        }
+
+        .submit-btn:disabled {
+            background: #9eb3b3;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+            opacity: 0.7;
+        }
+
+        .message-area {
+            margin: 20px 0 0;
+            padding: 12px 16px;
+            border-radius: 40px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .message-success {
+            background: #e0f2e9;
+            color: #0c6b58;
+            border-left: 5px solid #1e6f5c;
+        }
+
+        .message-error {
+            background: #ffe6e5;
+            color: #bc3f2e;
+            border-left: 5px solid #e25c4a;
+        }
+
+        .message-info {
+            background: #eef2ff;
+            color: #2c5282;
+        }
+
+        .vote-disabled-note {
+            text-align: center;
+            background: #fef9e3;
+            border-radius: 40px;
+            padding: 10px;
+            margin-bottom: 16px;
+            color: #b85c1a;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        footer {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 1rem;
+            background: #f1f5f9;
+            color: #5e7c8c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="vote-card" id="appRoot">
+    <div class="vote-header">
+        <h1>傅科摆小球旋转运动投票</h1>
+        <div class="sub">⚡ 傅科摆实验 · 直观验证地球自转 ⚡</div>
+    </div>
+    <div class="vote-content" id="dynamicContent">
+        <!-- 动态内容：loading / 投票表单 -->
+        <div class="loading-overlay" id="loadingState">
+            <div class="spinner"></div>
+            <div class="loading-text">加载中，请稍候...</div>
+        </div>
+    </div>
+    <footer>
+        🌟 每人仅限一次投票机会
+    </footer>
+</div>
+
+<script>
+    // ---------- 配置常量 ----------
+    const API_CONFIG = {
+        submitUrl: 'https://quickform.cn/api/bojic53nyf',
+        authToken: 'Bearer dtk_a998493bf5a6_1d7c81e4c36282b59cfc7746a3003d80',
+        recordType: 'vote'
+    };
+
+    const STORAGE_KEY = 'foucault_pendulum_voted';
+    let hasVotedLocally = false;
+    let isSubmitting = false;
+    let contentContainer = document.getElementById('dynamicContent');
+
+    function showLoadingUI() {
+        if (contentContainer) {
+            contentContainer.innerHTML = `
+                <div class="loading-overlay">
+                    <div class="spinner"></div>
+                    <div class="loading-text">加载投票数据中，请稍候...</div>
+                </div>
+            `;
+        }
+    }
+
+    function showMessage(text, type = 'info', duration = 4000) {
+        let msgContainer = document.getElementById('dynamicMessageArea');
+        if (!msgContainer) {
+            const formDiv = document.querySelector('.vote-form');
+            if (formDiv && !document.getElementById('dynamicMessageArea')) {
+                const newMsgDiv = document.createElement('div');
+                newMsgDiv.id = 'dynamicMessageArea';
+                newMsgDiv.className = 'message-area';
+                formDiv.appendChild(newMsgDiv);
+                msgContainer = newMsgDiv;
+            } else {
+                if(type === 'error') alert(text);
+                return;
+            }
+        }
+        let msgClass = type === 'success' ? 'message-success' : (type === 'error' ? 'message-error' : 'message-info');
+        msgContainer.className = `message-area ${msgClass}`;
+        msgContainer.innerText = text;
+        if (duration > 0) {
+            setTimeout(() => {
+                if (msgContainer) {
+                    msgContainer.innerText = '';
+                    msgContainer.className = 'message-area';
+                }
+            }, duration);
+        }
+    }
+
+    function renderMainUI(voteDisabled) {
+        if (!contentContainer) return;
+        const isDisabled = voteDisabled || hasVotedLocally;
+        const disabledAttr = isDisabled ? 'disabled' : '';
+        const radioDisabledAttr = isDisabled ? 'disabled' : '';
+        
+        let warningBanner = '';
+        if (isDisabled && hasVotedLocally) {
+            warningBanner = `<div class="vote-disabled-note">✅ 您已完成投票！感谢参与。每人仅有一次机会，不可更改。</div>`;
+        }
+        
+        const formHtml = `
+            <div class="vote-form">
+                ${warningBanner}
+                <div class="vote-question">❓ 傅科摆的小球是否在做旋转运动？</div>
+                <div class="radio-group" id="radioGroup">
+                    <label class="radio-option" style="opacity: ${isDisabled ? '0.7' : '1'}">
+                        <input type="radio" name="voteOption" value="是" ${radioDisabledAttr} id="optionYes"> 
+                        <span>✅ 是</span>
+                    </label>
+                    <label class="radio-option" style="opacity: ${isDisabled ? '0.7' : '1'}">
+                        <input type="radio" name="voteOption" value="否" ${radioDisabledAttr} id="optionNo">
+                        <span>❌ 否</span>
+                    </label>
+                </div>
+                <button class="submit-btn" id="submitVoteBtn" ${disabledAttr}>${hasVotedLocally ? '✓ 已投票' : '🗳️ 提交我的投票'}</button>
+                <div id="dynamicMessageArea" class="message-area" style="min-height: 56px;"></div>
+            </div>
+        `;
+        
+        contentContainer.innerHTML = formHtml;
+        
+        if (!isDisabled && !hasVotedLocally) {
+            const submitBtn = document.getElementById('submitVoteBtn');
+            if (submitBtn) {
+                const newBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+                newBtn.addEventListener('click', handleVoteSubmit);
+            }
+        } else {
+            const disabledBtn = document.getElementById('submitVoteBtn');
+            if (disabledBtn && hasVotedLocally) {
+                disabledBtn.addEventListener('click', (e) => {
+                    showMessage('您已经投过票了，每人仅限一次。', 'info', 3000);
+                });
+            }
+        }
+    }
+    
+    async function handleVoteSubmit(event) {
+        if (isSubmitting) {
+            showMessage('请勿重复提交，投票处理中……', 'info', 2000);
+            return;
+        }
+        const selectedRadio = document.querySelector('input[name="voteOption"]:checked');
+        if (!selectedRadio) {
+            showMessage('请先选择“是”或“否”再提交投票 🙏', 'error', 3000);
+            return;
+        }
+        const voteValue = selectedRadio.value;
+        
+        if (hasVotedLocally) {
+            showMessage('您已经投过票了，每人仅限一票。感谢参与！', 'info', 3000);
+            return;
+        }
+        
+        isSubmitting = true;
+        const submitBtn = document.getElementById('submitVoteBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+        }
+        
+        const payload = {
+            recordType: "vote",
+            schemaVersion: "1.0",
+            action: "create",
+            summary: { title: "傅科摆投票" },
+            data: { voteOption: voteValue },
+            meta: { source: "web" }
+        };
+        
+        try {
+            const response = await fetch(API_CONFIG.submitUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': API_CONFIG.authToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            let result;
+            const textData = await response.text();
+            try {
+                result = JSON.parse(textData);
+            } catch (e) {
+                throw new Error('服务器响应格式错误');
+            }
+            
+            if (response.ok && result.code === 0) {
+                localStorage.setItem(STORAGE_KEY, 'true');
+                hasVotedLocally = true;
+                showMessage(`🎉 感谢您的投票！您选择：“${voteValue}”。傅科摆的科学奥秘等待您探索。`, 'success', 5000);
+                renderMainUI(true);
+                setTimeout(() => {
+                    showMessage('✨ 投票已记录，每人仅有一次机会 ✨', 'success', 3000);
+                }, 500);
+            } else {
+                const errMsg = result.message || `提交失败(code:${result.code})`;
+                throw new Error(errMsg);
+            }
+        } catch (err) {
+            console.error('提交错误:', err);
+            let errorMsg = '提交失败，请检查网络后重试';
+            if (err.message) errorMsg = err.message;
+            showMessage(`❌ ${errorMsg}`, 'error', 5000);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🗳️ 提交我的投票';
+            }
+            isSubmitting = false;
+            return;
+        }
+        
+        isSubmitting = false;
+    }
+    
+    async function initPage() {
+        showLoadingUI();
+        const storedVoted = localStorage.getItem(STORAGE_KEY);
+        hasVotedLocally = (storedVoted === 'true');
+        setTimeout(() => {
+            renderMainUI(hasVotedLocally);
+            if (!hasVotedLocally) {
+                showMessage('💡 请根据傅科摆实验现象，投出您宝贵的一票。每人仅一次机会。', 'info', 4000);
+            } else {
+                showMessage('🔔 您已经参与过投票，每人仅限一次。感谢支持科学互动！', 'info', 4000);
+            }
+        }, 300);
+    }
+    
+    initPage().catch(err => {
+        console.error("初始化错误:", err);
+        if (contentContainer) {
+            contentContainer.innerHTML = `<div class="message-area message-error">⚠️ 无法加载投票系统，请刷新页面重试。错误: ${err.message}</div>`;
+        }
+    });
+</script>
+</body>
+</html>
