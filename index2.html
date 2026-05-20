@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🏮 水浒豪杰猜猜猜 - 看动作/武器猜人物 | 声控答题</title>
+    <style>
+        :root {
+            --bg: #faf3e4;
+            --gold: #b8861f;
+            --gold-light: #d4a843;
+            --red: #b5332a;
+            --red-dark: #8b1f18;
+            --card-bg: #fffef9;
+            --text: #3e3028;
+            --text-dim: #8a7a6a;
+            --text-light: #6b5d4f;
+            --accent: #c9473a;
+            --success: #3d9b6c;
+            --glow-gold: 0 0 30px rgba(184, 134, 31, 0.4);
+            --glow-red: 0 0 30px rgba(181, 51, 42, 0.35);
+            --shadow-card: 0 6px 32px rgba(80, 50, 20, 0.12);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 10px;
+            --transition: 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --border-subtle: #e5d9c4;
+            --border-strong: #d4c5a9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg);
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(180, 150, 100, 0.04) 3px, rgba(180, 150, 100, 0.04) 6px),
+                repeating-linear-gradient(90deg, transparent, transparent 5px, rgba(180, 150, 100, 0.03) 5px, rgba(180, 150, 100, 0.03) 10px),
+                radial-gradient(ellipse at 50% 0%, rgba(255, 220, 160, 0.25) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 90%, rgba(200, 140, 90, 0.1) 0%, transparent 45%),
+                radial-gradient(ellipse at 20% 80%, rgba(210, 170, 110, 0.08) 0%, transparent 45%);
+            min-height: 100vh;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: linear-gradient(180deg, transparent 72%, rgba(180, 150, 120, 0.2) 88%, rgba(160, 130, 100, 0.35) 100%);
+            opacity: 0.5;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 750px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 10px 0;
+        }
+        .header .title-icon {
+            font-size: 3rem;
+            display: block;
+            animation: floatIcon 3s ease-in-out infinite;
+            filter: drop-shadow(0 4px 12px rgba(184, 134, 31, 0.5));
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.4rem);
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            background: linear-gradient(180deg, #c9a23b 0%, #8b5e1f 40%, #6b3a10 70%, #8b5e1f 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 6px 0;
+            line-height: 1.3;
+        }
+        .header .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            letter-spacing: 0.15em;
+            font-weight: 500;
+        }
+
+        .progress-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .progress-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #fffef9;
+            border: 2px solid #d4c5a9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #a89880;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(100, 70, 30, 0.06);
+        }
+        .progress-dot.current {
+            border-color: var(--gold);
+            color: var(--gold);
+            box-shadow: var(--glow-gold);
+            animation: pulseDot 2s ease-in-out infinite;
+            background: #fffdf5;
+        }
+        .progress-dot.solved {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(61, 155, 108, 0.45);
+        }
+        .progress-dot.solved::after {
+            content: '✓';
+            font-size: 0.9rem;
+            font-weight: 900;
+        }
+        .progress-dot.solved .dot-num {
+            display: none;
+        }
+        @keyframes pulseDot {
+            0%, 100% { box-shadow: 0 0 12px rgba(184, 134, 31, 0.35); }
+            50% { box-shadow: 0 0 28px rgba(184, 134, 31, 0.7), 0 0 50px rgba(184, 134, 31, 0.25); }
+        }
+        .progress-line {
+            width: 30px;
+            height: 2px;
+            background: #d4c5a9;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+        .progress-line.done {
+            background: var(--success);
+            box-shadow: 0 0 6px rgba(61, 155, 108, 0.4);
+        }
+        .round-label-mini {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+            text-align: center;
+            flex-shrink: 0;
+            margin: 0 4px;
+            font-weight: 600;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-subtle);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(184, 134, 31, 0.5), transparent);
+            z-index: 2;
+            pointer-events: none;
+        }
+        .main-card.solved-glow {
+            border-color: rgba(61, 155, 108, 0.5);
+            box-shadow: var(--shadow-card), 0 0 50px rgba(61, 155, 108, 0.2);
+        }
+        .round-badge {
+            display: inline-block;
+            background: #fdf0ee;
+            color: #b5332a;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            border: 1px solid rgba(181, 51, 42, 0.25);
+        }
+        .round-badge.round-2 {
+            background: #eef6fb;
+            color: #3a7090;
+            border-color: rgba(60, 140, 180, 0.3);
+        }
+        .question-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+            letter-spacing: 0.04em;
+        }
+        .question-hint {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            font-style: italic;
+            letter-spacing: 0.03em;
+        }
+
+        .display-stage {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/10;
+            max-height: 420px;
+            background: #f9f4ea;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e5d9c4;
+            transition: var(--transition);
+            cursor: default;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 60px rgba(180, 150, 100, 0.08);
+        }
+        .display-stage.colored-stage {
+            border-color: rgba(184, 134, 31, 0.5);
+            box-shadow: inset 0 0 60px rgba(180, 150, 100, 0.05), 0 0 35px rgba(184, 134, 31, 0.2);
+            background: #fffef8;
+        }
+        .display-stage.weapon-glow {
+            border-color: rgba(210, 150, 40, 0.6);
+            box-shadow: inset 0 0 60px rgba(180, 150, 100, 0.05), 0 0 50px rgba(210, 150, 40, 0.45), 0 0 100px rgba(200, 130, 20, 0.2);
+            animation: weaponGlowPulse 0.8s ease-in-out infinite;
+            background: #fffef8;
+        }
+        @keyframes weaponGlowPulse {
+            0%, 100% { box-shadow: inset 0 0 60px rgba(180, 150, 100, 0.05), 0 0 35px rgba(210, 150, 40, 0.4), 0 0 80px rgba(200, 130, 20, 0.15); }
+            50% { box-shadow: inset 0 0 60px rgba(180, 150, 100, 0.05), 0 0 70px rgba(210, 160, 50, 0.7), 0 0 130px rgba(200, 140, 25, 0.3); }
+        }
+        .display-stage .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(180, 150, 120, 0.03) 2px, rgba(180, 150, 120, 0.03) 4px);
+            opacity: 0.5;
+            transition: opacity 0.6s;
+        }
+        .display-stage.colored-stage .scanlines,
+        .display-stage.weapon-glow .scanlines {
+            opacity: 0.1;
+        }
+        .display-stage .stage-label {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            z-index: 6;
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            color: #a89880;
+            background: rgba(255, 254, 249, 0.8);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: var(--transition);
+            border: 1px solid rgba(180, 150, 120, 0.2);
+        }
+        .display-stage.colored-stage .stage-label,
+        .display-stage.weapon-glow .stage-label {
+            color: #8b5e1f;
+            background: rgba(255, 254, 245, 0.9);
+            border-color: rgba(184, 134, 31, 0.3);
+        }
+        .fake-player-bar {
+            display: none !important;
+        }
+
+        .svg-stage-container {
+            position: relative;
+            z-index: 3;
+            width: 80%;
+            height: 75%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .svg-stage-container svg {
+            width: 100%;
+            height: 100%;
+            transition: filter 3s ease-out, opacity 0.6s;
+            filter: brightness(0.15) contrast(1.8);
+        }
+        .display-stage.colored-stage .svg-stage-container svg {
+            filter: brightness(1) contrast(1);
+        }
+
+        .image-stage-container {
+            position: relative;
+            z-index: 3;
+            width: 80%;
+            height: 75%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .image-stage-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: filter 1.5s ease-out, transform 0.5s;
+            filter: grayscale(1) contrast(1.3) brightness(0.55);
+        }
+        .display-stage.colored-stage .image-stage-container img,
+        .display-stage.weapon-glow .image-stage-container img {
+            filter: grayscale(0) contrast(1) brightness(1);
+            transform: scale(1.02);
+        }
+
+        .color-flash-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4;
+            background: transparent;
+            transition: background 0.3s;
+            border-radius: var(--radius-md);
+        }
+        .color-flash-overlay.active {
+            background: radial-gradient(circle at center, rgba(255, 255, 240, 0.7) 0%, transparent 70%);
+            animation: flashBurst 0.6s ease-out forwards;
+        }
+        @keyframes flashBurst {
+            0% { background: radial-gradient(circle at center, rgba(255, 255, 250, 0.9) 0%, rgba(255, 230, 180, 0.5) 40%, transparent 70%); }
+            100% { background: transparent; }
+        }
+
+        .answer-area {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            align-items: center;
+        }
+        .voice-recognition-box {
+            width: 100%;
+            max-width: 320px;
+            min-height: 60px;
+            background: linear-gradient(135deg, #f8f4ed, #f5f0e8);
+            border: 2px solid #d4c5a9;
+            border-radius: 16px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(100, 80, 40, 0.1);
+            transition: all 0.3s;
+        }
+        .voice-recognition-box.listening {
+            border-color: #c9473a;
+            background: linear-gradient(135deg, #fdf0ee, #fbe4e1);
+            box-shadow: 0 4px 20px rgba(181, 51, 42, 0.2);
+        }
+        .voice-recognition-box.wrong {
+            border-color: #c9473a;
+            background: linear-gradient(135deg, #fdf0ee, #fbe4e1);
+            animation: shakeWrong 0.5s ease-in-out;
+            box-shadow: 0 0 30px rgba(181, 51, 42, 0.4);
+        }
+        .voice-recognition-box.correct {
+            border-color: #3d9b6c;
+            background: linear-gradient(135deg, #f0f8f4, #e8f5ed);
+            box-shadow: 0 0 30px rgba(61, 155, 108, 0.4);
+        }
+        @keyframes shakeWrong {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .voice-recognition-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #8a7a6a;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .voice-recognition-text.correct {
+            color: #3d9b6c;
+        }
+        .voice-recognition-text.wrong {
+            color: #c9473a;
+        }
+        .text-input,
+        .btn-submit,
+        .voice-feedback {
+            display: none !important;
+        }
+        .btn {
+            padding: 14px 22px;
+            border-radius: 30px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: var(--transition);
+            font-family: inherit;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-mic {
+            background: linear-gradient(135deg, #f0f5fa, #e4edf5);
+            color: #3a7090;
+            border: 3px solid #8ab8d4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            box-shadow: 0 6px 24px rgba(58, 112, 144, 0.25);
+            font-size: 2rem;
+            margin: 0 auto;
+        }
+        .btn-mic:hover {
+            background: #d9e8f2;
+            border-color: #5a9fc4;
+            box-shadow: 0 8px 32px rgba(58, 112, 144, 0.35);
+            transform: scale(1.05);
+        }
+        .btn-mic.listening {
+            background: linear-gradient(135deg, #fdf0ee, #fbe4e1);
+            border-color: #c9473a;
+            color: #b5332a;
+            animation: pulseVoice 1s ease-in-out infinite;
+            box-shadow: 0 0 35px rgba(181, 51, 42, 0.5);
+        }
+        @keyframes pulseVoice {
+            0%,100% { box-shadow: 0 0 20px rgba(181, 51, 42, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(181, 51, 42, 0.75), 0 0 80px rgba(200, 70, 45, 0.3); }
+        }
+        .btn-mic.listening .mic-icon {
+            animation: micShake 0.3s ease-in-out infinite;
+        }
+        @keyframes micShake {
+            0%,100% { transform: rotate(0); }
+            25% { transform: rotate(-12deg); }
+            75% { transform: rotate(12deg); }
+        }
+
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: particleFly 2s ease-out forwards;
+            font-size: 1.5rem;
+        }
+        @keyframes particleFly {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+            30% { opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0) rotate(var(--rot)); opacity: 0; }
+        }
+
+        .success-toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            background: #3d9b6c;
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.06em;
+            z-index: 200;
+            pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 36px rgba(61, 155, 108, 0.4);
+        }
+        .success-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .all-done-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(240, 225, 200, 0.85);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s;
+            backdrop-filter: blur(4px);
+        }
+        .all-done-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .all-done-card {
+            background: #fffef9;
+            border-radius: var(--radius-lg);
+            padding: 40px 30px;
+            text-align: center;
+            border: 2px solid var(--gold);
+            box-shadow: var(--glow-gold), var(--shadow-card);
+            max-width: 450px;
+            width: 90%;
+        }
+        .all-done-card .trophy {
+            font-size: 5rem;
+            animation: floatIcon 2s ease-in-out infinite;
+        }
+        .all-done-card h2 {
+            font-size: 1.8rem;
+            margin: 16px 0;
+            background: linear-gradient(180deg, #c9a23b, #8b5e1f);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .all-done-card .btn {
+            margin-top: 16px;
+            padding: 14px 36px;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .main-card { padding: 18px 14px; border-radius: var(--radius-md); }
+            .display-stage { aspect-ratio: 4/3; max-height: 280px; border-radius: var(--radius-sm); }
+            .input-row { flex-wrap: wrap; }
+            .btn { padding: 12px 16px; font-size: 0.85rem; border-radius: 25px; }
+            .text-input { padding: 12px 14px; font-size: 0.9rem; }
+            .btn-voice { flex: 1; justify-content: center; min-width: 100px; }
+            .btn-submit { flex: 0; min-width: 70px; }
+            .progress-dot { width: 32px; height: 32px; font-size: 0.9rem; }
+            .progress-line { width: 18px; }
+            .fake-player-bar { height: 22px; padding: 0 8px; }
+            .fake-player-bar .time-text { font-size: 0.55rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="header">
+        <span class="title-icon">🏮</span>
+        <h1>水浒豪杰猜猜猜</h1>
+        <p class="subtitle">看剪影 · 识武器 · 辨英雄</p>
+    </div>
+
+    <div class="progress-bar-wrap" id="progressBar">
+        <span class="round-label-mini">第一轮</span>
+        <div class="progress-dot current" data-index="0" id="dot0"><span class="dot-num">1</span></div>
+        <span class="round-label-mini">第二轮</span>
+        <div class="progress-line" id="line0"></div>
+        <div class="progress-dot" data-index="1" id="dot1"><span class="dot-num">2</span></div>
+    </div>
+
+    <div class="main-card" id="mainCard">
+        <span class="round-badge" id="roundBadge">🎬 第一轮 · 看动作猜人物</span>
+        <div class="question-title" id="questionTitle">第1题：</div>
+        <div class="question-hint" id="questionHint">💡 黑白剪影中，这位好汉在沂岭怒杀四虎，他是谁？</div>
+
+        <div class="display-stage" id="displayStage">
+            <div class="scanlines"></div>
+            <span class="stage-label" id="stageLabel">🔲 黑白剪影</span>
+            <div id="dynamicContainer" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+            <div class="color-flash-overlay" id="colorFlash"></div>
+            <div class="fake-player-bar">
+                <div class="play-icon"></div>
+                <div class="timeline"><div class="timeline-fill" id="timelineFill"></div></div>
+                <span class="time-text" id="timeText">00:00 / 00:05</span>
+            </div>
+        </div>
+
+        <div class="answer-area">
+            <div class="voice-recognition-box" id="voiceRecognitionBox">
+                <span class="voice-recognition-text" id="voiceRecognitionText">准备就绪</span>
+            </div>
+            <button class="btn btn-mic" id="btnVoice" title="语音输入（点击开始说话）">
+                <span class="mic-icon">🎤</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="particles-container" id="particlesContainer"></div>
+<div class="success-toast" id="successToast">✅ 回答正确！</div>
+<div class="all-done-overlay" id="allDoneOverlay">
+    <div class="all-done-card">
+        <div class="trophy">🏆</div>
+        <h2>全部答对！</h2>
+        <p style="color:var(--text-dim);margin:8px 0;">你已识得两位水浒豪杰</p>
+        <button class="btn btn-submit" onclick="resetGame()">🔄 再来一局</button>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ========== 声音特效：叮咚答对了 ==========
+        function playCorrectSound() {
+            if (!window.speechSynthesis) {
+                console.warn("当前浏览器不支持语音合成");
+                return;
+            }
+            try {
+                // 取消任何正在播放的语音，避免重叠
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance('叮咚 答对了');
+                utterance.lang = 'zh-CN';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.2;
+                utterance.volume = 1;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.warn("语音播放失败", e);
+            }
+        }
+
+        // ==================== 游戏数据 ====================
+        const questions = [{
+            id: 0,
+            round: 1,
+            roundLabel: '🎬 第一轮 · 看动作猜人物',
+            title: '',
+            hint: '',
+            stageLabel: '',
+            mediaType: 'image',
+            imageSrc: '鲁智深.png',
+            videoSrc: '视频2.mp4',
+            answers: ['鲁智深', '花和尚', '鲁达', '鲁提辖'],
+            answerDisplay: '鲁智深（花和尚）',
+            weaponName: null,
+            colorTransition: true,
+            isWeaponGlow: false,
+        }, {
+            id: 1,
+            round: 2,
+            roundLabel: '⚔️ 第二轮 · 看武器猜人物',
+            title: '',
+            hint: '双铁枪的主人是谁？',
+            stageLabel: '',
+            mediaType: 'image',
+            imageSrc: '双铁枪的黑白版本.png',
+            imageSrcColored: '双铁枪的彩色版本.png',
+            answers: ['董平', '双枪将', '董一撞'],
+            answerDisplay: '董平（双枪将）',
+            weaponName: '双铁枪',
+            colorTransition: true,
+            isWeaponGlow: false,
+        }];
+
+        function getSVGForType(type) {
+            if (type === 'silhouette_likui') {
+                return `<svg viewBox="0 0 300 380" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="150" cy="240" rx="70" ry="90" fill="currentColor"/>
+                    <circle cx="150" cy="110" r="48" fill="currentColor"/>
+                    <ellipse cx="150" cy="68" rx="40" ry="18" fill="currentColor"/>
+                    <circle cx="120" cy="72" r="14" fill="currentColor"/>
+                    <circle cx="180" cy="68" r="16" fill="currentColor"/>
+                    <circle cx="140" cy="60" r="13" fill="currentColor"/>
+                    <rect x="118" y="100" width="28" height="8" rx="4" fill="#faf3e4"/>
+                    <rect x="154" y="100" width="28" height="8" rx="4" fill="#faf3e4"/>
+                    <circle cx="130" cy="112" r="6" fill="#faf3e4"/>
+                    <circle cx="170" cy="112" r="6" fill="#faf3e4"/>
+                    <ellipse cx="150" cy="145" rx="35" ry="18" fill="currentColor"/>
+                    <rect x="125" y="130" width="10" height="20" rx="5" fill="currentColor"/>
+                    <rect x="165" y="130" width="10" height="20" rx="5" fill="currentColor"/>
+                    <path d="M85,190 L40,140 L25,120" stroke="currentColor" stroke-width="22" stroke-linecap="round" fill="none"/>
+                    <rect x="8" y="105" width="38" height="50" rx="6" fill="currentColor" transform="rotate(-20,25,130)"/>
+                    <rect x="2" y="95" width="18" height="20" rx="3" fill="currentColor" transform="rotate(-15,10,105)"/>
+                    <path d="M215,190 L260,135 L275,115" stroke="currentColor" stroke-width="22" stroke-linecap="round" fill="none"/>
+                    <rect x="254" y="100" width="38" height="50" rx="6" fill="currentColor" transform="rotate(15,273,125)"/>
+                    <rect x="278" y="90" width="18" height="20" rx="3" fill="currentColor" transform="rotate(10,287,100)"/>
+                    <rect x="115" y="300" width="28" height="65" rx="10" fill="currentColor"/>
+                    <rect x="157" y="300" width="28" height="65" rx="10" fill="currentColor"/>
+                    <ellipse cx="129" cy="368" rx="20" ry="10" fill="currentColor"/>
+                    <ellipse cx="171" cy="368" rx="20" ry="10" fill="currentColor"/>
+                    <rect x="90" y="200" width="120" height="14" rx="7" fill="#faf3e4"/>
+                </svg>`;
+            } else if (type === 'silhouette_luzhishen') {
+                return `<svg viewBox="0 0 360 380" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="250" y="50" width="40" height="310" rx="14" fill="currentColor"/>
+                    <ellipse cx="270" cy="55" rx="70" ry="55" fill="currentColor"/>
+                    <ellipse cx="240" cy="35" rx="45" ry="38" fill="currentColor"/>
+                    <ellipse cx="300" cy="40" rx="40" ry="35" fill="currentColor"/>
+                    <path d="M255,340 L230,370 L240,375 L258,350" fill="currentColor"/>
+                    <path d="M285,340 L310,370 L300,375 L282,350" fill="currentColor"/>
+                    <ellipse cx="180" cy="220" rx="55" ry="40" fill="currentColor" transform="rotate(-25,180,220)"/>
+                    <circle cx="150" cy="130" r="40" fill="currentColor"/>
+                    <ellipse cx="165" cy="170" rx="22" ry="8" fill="#faf3e4" transform="rotate(-20,165,170)"/>
+                    <path d="M195,200 Q240,180 260,190" stroke="currentColor" stroke-width="20" stroke-linecap="round" fill="none"/>
+                    <path d="M190,230 Q235,210 258,200" stroke="currentColor" stroke-width="18" stroke-linecap="round" fill="none"/>
+                    <circle cx="258" cy="192" r="12" fill="currentColor"/>
+                    <circle cx="256" cy="202" r="11" fill="currentColor"/>
+                    <rect x="145" y="270" width="24" height="55" rx="8" fill="currentColor" transform="rotate(-10,157,297)"/>
+                    <rect x="180" y="265" width="24" height="55" rx="8" fill="currentColor" transform="rotate(8,192,292)"/>
+                    <ellipse cx="148" cy="330" rx="18" ry="8" fill="currentColor"/>
+                    <ellipse cx="195" cy="328" rx="18" ry="8" fill="currentColor"/>
+                </svg>`;
+            }
+            return '';
+        }
+
+        // ==================== 状态管理 ====================
+        let currentIndex = 0;
+        let solvedStatus = [false, false];
+        let isTransitioning = false;
+
+        const $mainCard = document.getElementById('mainCard');
+        const $roundBadge = document.getElementById('roundBadge');
+        const $questionTitle = document.getElementById('questionTitle');
+        const $questionHint = document.getElementById('questionHint');
+        const $displayStage = document.getElementById('displayStage');
+        const $stageLabel = document.getElementById('stageLabel');
+        const $dynamicContainer = document.getElementById('dynamicContainer');
+        const $colorFlash = document.getElementById('colorFlash');
+        const $timelineFill = document.getElementById('timelineFill');
+        const $timeText = document.getElementById('timeText');
+        const $btnVoice = document.getElementById('btnVoice');
+        const $voiceRecognitionBox = document.getElementById('voiceRecognitionBox');
+        const $voiceRecognitionText = document.getElementById('voiceRecognitionText');
+        const $successToast = document.getElementById('successToast');
+        const $particlesContainer = document.getElementById('particlesContainer');
+        const $allDoneOverlay = document.getElementById('allDoneOverlay');
+        const $progressDots = [0, 1].map(i => document.getElementById('dot' + i));
+        const $progressLines = [0].map(i => document.getElementById('line' + i));
+
+        function renderQuestion(index) {
+            if (isTransitioning) return;
+            const q = questions[index];
+            currentIndex = index;
+
+            $roundBadge.textContent = q.roundLabel;
+            $roundBadge.className = 'round-badge' + (q.round === 2 ? ' round-2' : '');
+            $questionTitle.textContent = q.title;
+            $questionHint.textContent = q.hint;
+            $stageLabel.textContent = q.stageLabel;
+            $timelineFill.style.width = '35%';
+            $timeText.textContent = '00:00 / 00:05';
+
+            $displayStage.classList.remove('colored-stage', 'weapon-glow');
+            $colorFlash.classList.remove('active');
+
+            $dynamicContainer.innerHTML = '';
+            if (q.mediaType === 'svg') {
+                $dynamicContainer.className = 'svg-stage-container';
+                $dynamicContainer.innerHTML = q.svgContent;
+            } else if (q.mediaType === 'image') {
+                $dynamicContainer.className = 'image-stage-container';
+                const img = document.createElement('img');
+                img.src = q.imageSrc;
+                img.alt = q.weaponName || '武器';
+                img.id = 'weaponImage';
+                img.style.filter = 'none';
+                $dynamicContainer.appendChild(img);
+            }
+
+            if (solvedStatus[index]) restoreSolvedState(index);
+            updateProgressDots();
+            $mainCard.classList.remove('solved-glow');
+            if (solvedStatus[index]) $mainCard.classList.add('solved-glow');
+            isTransitioning = false;
+        }
+
+        function restoreSolvedState(index) {
+            const q = questions[index];
+            $displayStage.classList.add(q.isWeaponGlow ? 'weapon-glow' : 'colored-stage');
+            $stageLabel.textContent = '';
+            if (q.mediaType === 'image') {
+                if (q.videoSrc) {
+                    const video = document.createElement('video');
+                    video.src = q.videoSrc;
+                    video.autoplay = true;
+                    video.loop = false;
+                    video.muted = false;
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.objectFit = 'contain';
+                    video.onended = function() {
+                        video.currentTime = 0;
+                        video.play();
+                    };
+                    $dynamicContainer.innerHTML = '';
+                    $dynamicContainer.appendChild(video);
+                } else {
+                    const img = document.getElementById('weaponImage');
+                    if (img) {
+                        if (q.imageSrcColored) img.src = q.imageSrcColored;
+                        img.style.filter = 'none';
+                    }
+                }
+            }
+            $btnVoice.disabled = true;
+        }
+
+        function updateProgressDots() {
+            $progressDots.forEach((dot, i) => {
+                dot.classList.remove('current', 'solved');
+                if (solvedStatus[i]) dot.classList.add('solved');
+                else if (i === currentIndex) dot.classList.add('current');
+            });
+            $progressLines.forEach((line, i) => {
+                line.classList.toggle('done', solvedStatus[i] && solvedStatus[i + 1]);
+            });
+        }
+
+        function handleCorrectAnswer(index) {
+            if (solvedStatus[index] || isTransitioning) return;
+            isTransitioning = true;
+            const q = questions[index];
+            solvedStatus[index] = true;
+            // 🎵 声音特效：叮咚答对了！
+            playCorrectSound();
+            showToast('✅ 回答正确！' + q.answerDisplay);
+            spawnParticles();
+            if (q.mediaType === 'image') {
+                $displayStage.classList.add(q.isWeaponGlow ? 'weapon-glow' : 'colored-stage');
+                $stageLabel.textContent = '';
+                if (q.videoSrc) {
+                    const video = document.createElement('video');
+                    video.src = q.videoSrc;
+                    video.autoplay = true;
+                    video.loop = false;
+                    video.muted = false;
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.objectFit = 'contain';
+                    video.onended = function() {
+                        goToNextQuestion();
+                    };
+                    $dynamicContainer.innerHTML = '';
+                    $dynamicContainer.appendChild(video);
+                } else if (q.imageSrcColored) {
+                    const img = document.getElementById('weaponImage');
+                    if (img) { img.src = q.imageSrcColored; img.style.filter = 'none'; }
+                    setTimeout(() => goToNextQuestion(), 2000);
+                }
+                $colorFlash.classList.add('active');
+                setTimeout(() => $colorFlash.classList.remove('active'), 600);
+            } else {
+                $displayStage.classList.add(q.isWeaponGlow ? 'weapon-glow' : 'colored-stage');
+                $stageLabel.textContent = '';
+                $colorFlash.classList.add('active');
+                setTimeout(() => $colorFlash.classList.remove('active'), 600);
+                setTimeout(() => goToNextQuestion(), 2000);
+            }
+            $mainCard.classList.add('solved-glow');
+            $btnVoice.disabled = true;
+            $btnVoice.classList.remove('listening');
+            if (isListening) stopVoiceRecognition();
+            updateProgressDots();
+        }
+
+        function goToNextQuestion() {
+            isTransitioning = false;
+            if (solvedStatus.every(s => s)) {
+                setTimeout(() => $allDoneOverlay.classList.add('show'), 300);
+            } else {
+                const nextUnsolved = solvedStatus.findIndex((s, i) => !s && i > currentIndex);
+                const firstUnsolved = solvedStatus.findIndex(s => !s);
+                const target = nextUnsolved >= 0 ? nextUnsolved : firstUnsolved;
+                if (target >= 0 && target !== currentIndex) navigateTo(target);
+            }
+        }
+
+        function navigateTo(index) {
+            if (index === currentIndex || isTransitioning) return;
+            console.log('切换到问题:', index, '当前索引:', currentIndex);
+            $voiceRecognitionBox.classList.remove('correct', 'wrong', 'listening');
+            $voiceRecognitionText.textContent = '准备就绪';
+            $voiceRecognitionText.className = 'voice-recognition-text';
+            if (isListening) {
+                console.log('停止语音识别');
+                stopVoiceRecognition();
+            }
+            renderQuestion(index);
+            if (!solvedStatus[index]) {
+                $btnVoice.disabled = false;
+                $btnVoice.classList.remove('listening');
+                console.log('按钮已启用，可以点击开始语音识别');
+            }
+        }
+
+        function showToast(msg) {
+            $successToast.textContent = msg;
+            $successToast.classList.add('show');
+            clearTimeout($successToast._timeout);
+            $successToast._timeout = setTimeout(() => $successToast.classList.remove('show'), 2500);
+        }
+
+        function spawnParticles() {
+            const emojis = ['✨', '🌟', '💫', '🔥', '⚡', '🎯', '💥', '🏮', '⭐', '💪', '🎉', '🎊', '🌈', '💎', '👑', '🎆', '🌸', '🍀', '🌺', '🦋', '🐉', '🥳', '🤩', '😎', '👏', '🙌', '🤝', '💯', '🏅', '🎖️', '🌟'];
+            const stageRect = $displayStage.getBoundingClientRect();
+            const centerX = stageRect.left + stageRect.width / 2;
+            const centerY = stageRect.top + stageRect.height / 2;
+            const count = 80;
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('span');
+                particle.className = 'particle';
+                particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                particle.style.left = centerX + 'px';
+                particle.style.top = centerY + 'px';
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 150 + Math.random() * 600;
+                particle.style.setProperty('--dx', Math.cos(angle) * distance + 'px');
+                particle.style.setProperty('--dy', Math.sin(angle) * distance - 100 - Math.random() * 200 + 'px');
+                particle.style.setProperty('--rot', (Math.random() - 0.5) * 1080 + 'deg');
+                particle.style.animationDuration = (2 + Math.random() * 3) + 's';
+                particle.style.fontSize = (2 + Math.random() * 4) + 'rem';
+                particle.style.zIndex = '999';
+                $particlesContainer.appendChild(particle);
+                setTimeout(() => { if (particle.parentNode) particle.parentNode.removeChild(particle); }, 4000);
+            }
+        }
+
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                $btnVoice.style.display = 'none';
+                return null;
+            }
+            const rec = new SpeechRecognition();
+            rec.lang = 'zh-CN';
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.maxAlternatives = 5;
+            return rec;
+        }
+
+        let lastCheckedTime = 0;
+        const CHECK_DEBOUNCE = 20;
+        let recognition = null;
+        let isListening = false;
+        let restartAttempts = 0;
+        let maxRestartAttempts = 10;
+        let restartDelay = 300;
+        let recognitionStarted = false;
+        let consecutiveErrors = 0;
+        const MAX_CONSECUTIVE_ERRORS = 5;
+
+        function startVoiceRecognition() {
+            if (isListening || solvedStatus[currentIndex]) return;
+            console.log('启动语音识别，当前索引:', currentIndex);
+            if (!recognition) {
+                recognition = initSpeechRecognition();
+                if (!recognition) return;
+            }
+            isListening = true;
+            restartAttempts = 0;
+            restartDelay = 300;
+            consecutiveErrors = 0;
+            recognitionStarted = false;
+            $btnVoice.classList.add('listening');
+            $btnVoice.querySelector('.mic-icon').textContent = '🔴';
+            $voiceRecognitionBox.classList.add('listening');
+            $voiceRecognitionBox.classList.remove('wrong', 'correct');
+            $voiceRecognitionText.textContent = '正在聆听...';
+            $voiceRecognitionText.className = 'voice-recognition-text';
+            let finalTranscript = '';
+
+            setupRecognitionHandlers(recognition, () => finalTranscript, (transcript) => { finalTranscript = transcript; });
+            safeStartRecognition();
+        }
+
+        function setupRecognitionHandlers(rec, finalTranscriptGetter, setFinalTranscript) {
+            rec.onresult = function(event) {
+                consecutiveErrors = 0;
+                restartDelay = 300;
+                let interim = '';
+                let bestConfidence = 0;
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    if (result.isFinal) {
+                        setFinalTranscript(result[0].transcript);
+                    } else {
+                        const conf = result[0].confidence || 0.4;
+                        if (conf > bestConfidence) {
+                            bestConfidence = conf;
+                        }
+                        interim += result[0].transcript;
+                    }
+                }
+                const finalTranscript = finalTranscriptGetter();
+                const now = Date.now();
+                if (finalTranscript.trim()) {
+                    checkVoiceAnswer(finalTranscript.trim(), true);
+                    setFinalTranscript('');
+                } else if (interim.trim() && now - lastCheckedTime > CHECK_DEBOUNCE) {
+                    lastCheckedTime = now;
+                    checkVoiceAnswer(interim.trim(), false);
+                }
+            };
+
+            rec.onerror = function(event) {
+                console.log('语音识别错误:', event.error);
+                consecutiveErrors++;
+
+                if (event.error === 'not-allowed' || event.error === 'denied') {
+                    stopVoiceRecognition();
+                    $voiceRecognitionText.textContent = '请允许麦克风权限';
+                    return;
+                }
+
+                if (event.error === 'no-speech' || event.error === 'aborted') {
+                    if (isListening && !solvedStatus[currentIndex] && consecutiveErrors < MAX_CONSECUTIVE_ERRORS) {
+                        scheduleRestart();
+                    } else if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                        restartDelay = Math.min(restartDelay * 1.5, 3000);
+                        consecutiveErrors = 0;
+                        scheduleRestart();
+                    }
+                    return;
+                }
+
+                if (event.error === 'network') {
+                    if (isListening && !solvedStatus[currentIndex]) {
+                        restartDelay = Math.min(restartDelay * 1.5, 5000);
+                        scheduleRestart();
+                    }
+                    return;
+                }
+
+                if (event.error === 'service') {
+                    if (isListening && !solvedStatus[currentIndex]) {
+                        try { rec.stop(); } catch(e) {}
+                        setTimeout(() => { safeStartRecognition(); }, restartDelay);
+                    }
+                    return;
+                }
+
+                if (isListening && !solvedStatus[currentIndex] && consecutiveErrors < MAX_CONSECUTIVE_ERRORS) {
+                    scheduleRestart();
+                }
+            };
+
+            rec.onend = function() {
+                if (isListening && !solvedStatus[currentIndex]) {
+                    safeStartRecognition();
+                } else if (!isListening) {
+                    stopVoiceRecognition();
+                }
+            };
+
+            rec.onstart = function() {
+                consecutiveErrors = 0;
+                recognitionStarted = true;
+            };
+        }
+
+        function scheduleRestart() {
+            if (!isListening || solvedStatus[currentIndex]) return;
+            restartAttempts++;
+            if (restartAttempts > maxRestartAttempts) {
+                restartDelay = Math.min(restartDelay * 1.5, 5000);
+                restartAttempts = 0;
+            }
+            setTimeout(() => {
+                if (isListening && !solvedStatus[currentIndex]) {
+                    safeStartRecognition();
+                }
+            }, restartDelay);
+        }
+
+        function safeStartRecognition() {
+            if (!isListening || solvedStatus[currentIndex] || !recognition) return;
+            try {
+                recognition.start();
+            } catch(e) {
+                console.log('启动识别失败，尝试停止后重启:', e);
+                try { recognition.stop(); } catch(e2) {}
+                setTimeout(() => {
+                    if (isListening && !solvedStatus[currentIndex]) {
+                        try { recognition.start(); } catch(e3) {
+                            console.log('重启失败:', e3);
+                            scheduleRestart();
+                        }
+                    }
+                }, restartDelay);
+            }
+        }
+
+        function showWrongFeedback() {
+            $voiceRecognitionBox.classList.add('wrong');
+            $voiceRecognitionBox.classList.remove('correct');
+            setTimeout(() => {
+                $voiceRecognitionBox.classList.remove('wrong');
+            }, 500);
+        }
+
+        function stopVoiceRecognition() {
+            isListening = false;
+            $btnVoice.classList.remove('listening');
+            $btnVoice.querySelector('.mic-icon').textContent = '🎤';
+            $voiceRecognitionBox.classList.remove('listening', 'wrong', 'correct');
+            $voiceRecognitionText.textContent = '准备就绪';
+            $voiceRecognitionText.className = 'voice-recognition-text';
+            if (recognition) try { recognition.stop(); } catch(e) {}
+        }
+
+        function checkVoiceAnswer(transcript, isFinal) {
+            if (solvedStatus[currentIndex]) return;
+            const q = questions[currentIndex];
+            console.log('检查语音答案:', transcript, '当前问题索引:', currentIndex, '答案:', q.answers);
+            const lowerTranscript = transcript.toLowerCase().replace(/\s+/g, '');
+            let matchedAnswer = null;
+            const matched = q.answers.some(ans => {
+                const lowerAns = ans.toLowerCase().replace(/\s+/g, '');
+                if (lowerTranscript === lowerAns) {
+                    matchedAnswer = ans;
+                    return true;
+                }
+                if (lowerTranscript.includes(lowerAns) && lowerAns.length >= 1) {
+                    matchedAnswer = ans;
+                    return true;
+                }
+                if (lowerAns.includes(lowerTranscript) && lowerTranscript.length >= 1) {
+                    matchedAnswer = ans;
+                    return true;
+                }
+                return false;
+            });
+            if (matched) {
+                console.log('匹配成功:', matchedAnswer);
+                $voiceRecognitionBox.classList.add('correct');
+                $voiceRecognitionBox.classList.remove('wrong', 'listening');
+                $voiceRecognitionText.textContent = `✓ ${matchedAnswer}`;
+                $voiceRecognitionText.className = 'voice-recognition-text correct';
+                isListening = false;
+                $btnVoice.classList.remove('listening');
+                $btnVoice.querySelector('.mic-icon').textContent = '🎤';
+                setTimeout(() => {
+                    handleCorrectAnswer(currentIndex);
+                }, 500);
+            } else if (isFinal && lowerTranscript.length >= 2) {
+                showWrongFeedback();
+            }
+        }
+
+        
+        $btnVoice.addEventListener('click', () => { if (!solvedStatus[currentIndex]) isListening ? stopVoiceRecognition() : startVoiceRecognition(); });
+        $progressDots.forEach((dot, i) => { dot.addEventListener('click', () => { if (i !== currentIndex && !isTransitioning) navigateTo(i); }); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && currentIndex > 0 && !isTransitioning) navigateTo(currentIndex - 1);
+            else if (e.key === 'ArrowRight' && currentIndex < 1 && !isTransitioning) navigateTo(currentIndex + 1);
+        });
+
+        window.resetGame = function() {
+            if (isListening) stopVoiceRecognition();
+            try { window.speechSynthesis?.cancel(); } catch(e) {}
+            isTransitioning = false;
+            solvedStatus = [false, false];
+            currentIndex = 0;
+            $allDoneOverlay.classList.remove('show');
+            $mainCard.classList.remove('solved-glow');
+            $displayStage.classList.remove('colored-stage', 'weapon-glow');
+            $colorFlash.classList.remove('active');
+            $btnVoice.disabled = false;
+            $btnVoice.classList.remove('listening');
+            $timelineFill.style.transition = '';
+            $timelineFill.style.width = '35%';
+            $timeText.textContent = '00:00 / 00:05';
+            $particlesContainer.innerHTML = '';
+            updateProgressDots();
+            renderQuestion(0);
+        };
+
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `@keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }`;
+        document.head.appendChild(shakeStyle);
+
+        recognition = initSpeechRecognition();
+        if (!recognition) { $btnVoice.style.opacity = '0.5'; $btnVoice.title = '浏览器不支持语音识别'; $voiceFeedback.textContent = '💬 请输入答案（语音识别不可用）'; }
+        renderQuestion(0);
+        updateProgressDots();
+        setTimeout(() => $textInput.focus(), 500);
+    })();
+</script>
+</body>
+</html>
